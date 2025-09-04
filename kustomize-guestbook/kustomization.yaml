@@ -1,5 +1,8 @@
 namePrefix: kustomize-
-
+images: # <--- Dieser Abschnitt wurde hinzugefügt/geändert
+- name: guestbook
+  newName: gcr.io/heptio-images/ks-guestbook
+  newTag: "0.2"
 resources:
 - guestbook-ui-deployment.yaml
 - guestbook-ui-svc.yaml
