@@ -1,0 +1,37 @@
+name: CI-Pipeline for Production
+
+on:
+  push:
+    branches:
+      - production  # Wird nur bei Push auf den "production" Branch ausgelöst
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v3
+
+      # Hier kämen die Schritte zum Bauen und Pushen des Docker-Images hin.
+      # Man würde z.B. den git-commit-hash als Image-Tag verwenden.
+      - name: Docker Image bauen & pushen
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: dein-dockerhub-name/guestbook:${{ github.sha }}
+
+      # Dieser Schritt ist der Kern von GitOps!
+      # Wir ändern nicht den Cluster, sondern das Git-Repo.
+      - name: Kubernetes Manifest aktualisieren
+        run: |
+          # Installiere kustomize
+          sudo apt-get install kustomize
+          # Ändere das Image-Tag in der Konfiguration
+          cd kustomize-guestbook
+          kustomize edit set image guestbook=dein-dockerhub-name/guestbook:${{ github.sha }}
+          # Committe und pushe die Änderung zurück ins Repo
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git commit -am "Update image to ${{ github.sha }}"
+          git push
