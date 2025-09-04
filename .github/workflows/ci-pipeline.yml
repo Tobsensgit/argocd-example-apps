@@ -28,19 +28,19 @@ jobs:
         with:
           context: ./kustomize-guestbook
           push: true
-          # KORREKTUR: Umwandlung in Kleinbuchstaben
-          tags: ghcr.io/${{ github.repository_owner.toLowerCase() }}/argocd-example-apps:${{ github.sha }}
+          # KORREKTUR: toLower()-Funktion verwenden
+          tags: ghcr.io/${{ toLower(github.repository_owner) }}/argocd-example-apps:${{ github.sha }}
 
       - name: Erneuter Checkout für den Push
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
+      
       - name: Kubernetes Manifest aktualisieren
         run: |
           cd kustomize-guestbook
-          # KORREKTUR: Umwandlung in Kleinbuchstaben
-          kustomize edit set image guestbook=ghcr.io/${{ github.repository_owner.toLowerCase() }}/argocd-example-apps:${{ github.sha }}
+          # KORREKTUR: toLower()-Funktion verwenden
+          kustomize edit set image guestbook=ghcr.io/${{ toLower(github.repository_owner) }}/argocd-example-apps:${{ github.sha }}
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git commit -am "Update image to ${{ github.sha }}"
