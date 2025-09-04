@@ -8,29 +8,40 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # KORREKTUR: Schreibrechte für den Code
+      packages: write # Schreibrechte für die GitHub Container Registry
+
     steps:
       - name: Code auschecken
         uses: actions/checkout@v3
 
-      # Hier kämen die Schritte zum Bauen und Pushen des Docker-Images hin.
-      # Man würde z.B. den git-commit-hash als Image-Tag verwenden.
-      - name: Docker Image bauen & pushen
-        uses: docker/build-push-action@v4
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          context: .
-          push: true
-          tags: dein-dockerhub-name/guestbook:${{ github.sha }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Dieser Schritt ist der Kern von GitOps!
-      # Wir ändern nicht den Cluster, sondern das Git-Repo.
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./kustomize-guestbook
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/argocd-example-apps:${{ github.sha }}
+
+      # Der 'git push' Schritt benötigt einen Checkout mit dem richtigen Token
+      - name: Erneuter Checkout für den Push
+        uses: actions/checkout@v3
+        with:
+          # Dieser Token hat jetzt die Schreibrechte, die oben definiert wurden
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Kubernetes Manifest aktualisieren
         run: |
-          # Installiere kustomize
-          sudo apt-get install kustomize
-          # Ändere das Image-Tag in der Konfiguration
           cd kustomize-guestbook
-          kustomize edit set image guestbook=dein-dockerhub-name/guestbook:${{ github.sha }}
-          # Committe und pushe die Änderung zurück ins Repo
+          kustomize edit set image guestbook=ghcr.io/${{ github.repository_owner }}/argocd-example-apps:${{ github.sha }}
+          # Git für den Commit konfigurieren
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git commit -am "Update image to ${{ github.sha }}"
