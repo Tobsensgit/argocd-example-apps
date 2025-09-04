@@ -1,10 +1,9 @@
-namePrefix: kustomize-
-images: # <--- Dieser Abschnitt wurde hinzugefügt/geändert
-- name: guestbook
-  newName: gcr.io/heptio-images/ks-guestbook
-  newTag: "0.2"
-resources:
-- guestbook-ui-deployment.yaml
-- guestbook-ui-svc.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+images:
+  # KORREKTUR: Wir zielen auf das richtige Image und ändern den Tag auf v4
+  - name: gcr.io/google-samples/gb-frontend
+    newTag: "v4"
+resources:
+  - guestbook-ui-deployment.yaml
+  - guestbook-ui-svc.yaml
