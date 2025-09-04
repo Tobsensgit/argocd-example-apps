@@ -3,14 +3,14 @@ name: CI-Pipeline for Production
 on:
   push:
     branches:
-      - production  # Wird nur bei Push auf den "production" Branch ausgelöst
+      - production
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # KORREKTUR: Schreibrechte für den Code
-      packages: write # Schreibrechte für die GitHub Container Registry
+      contents: write
+      packages: write
 
     steps:
       - name: Code auschecken
@@ -28,20 +28,19 @@ jobs:
         with:
           context: ./kustomize-guestbook
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/argocd-example-apps:${{ github.sha }}
+          # KORREKTUR: Umwandlung in Kleinbuchstaben
+          tags: ghcr.io/${{ github.repository_owner.toLowerCase() }}/argocd-example-apps:${{ github.sha }}
 
-      # Der 'git push' Schritt benötigt einen Checkout mit dem richtigen Token
       - name: Erneuter Checkout für den Push
         uses: actions/checkout@v3
         with:
-          # Dieser Token hat jetzt die Schreibrechte, die oben definiert wurden
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Kubernetes Manifest aktualisieren
         run: |
           cd kustomize-guestbook
-          kustomize edit set image guestbook=ghcr.io/${{ github.repository_owner }}/argocd-example-apps:${{ github.sha }}
-          # Git für den Commit konfigurieren
+          # KORREKTUR: Umwandlung in Kleinbuchstaben
+          kustomize edit set image guestbook=ghcr.io/${{ github.repository_owner.toLowerCase() }}/argocd-example-apps:${{ github.sha }}
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git commit -am "Update image to ${{ github.sha }}"
